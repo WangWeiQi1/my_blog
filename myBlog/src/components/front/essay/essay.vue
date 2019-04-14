@@ -65,7 +65,7 @@
     background-image: url('../../../common/image/bg2.jpg');
     background-repeat: no-repeat;
     overflow: scroll;
-    background-size: 100% 601px;
+    background-size: 100% 100%;
     margin-top: 61px;
   }
   .timeLine-container{

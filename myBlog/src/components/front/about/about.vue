@@ -73,7 +73,7 @@
     background-image: url('../../../common/image/bg2.jpg');
     background-repeat: no-repeat;
     overflow: scroll;
-    background-size: 100% 601px;
+    background-size: 100% 100%;
     color: #515250;
   }
   .about-me-header{
@@ -98,9 +98,9 @@
   .about-me-content{
     width: 90%;
     background: #ffffff;
-    margin: 20px auto 0 auto;
+    margin: 20px auto 200px auto;
     padding-top: 20px;
-    padding-bottom: 60px;
+    padding-bottom: 40px;
   }
   .about-me-info{
     border-left: 4px solid #6CE26C;
@@ -158,9 +158,10 @@
     line-height: 35px;
   }
   .footer-image{
-    width: 1175px;
+    width: 1215px;
     margin: 0 auto;
     height: 330px;
-    padding: 0 20px;
+    /* padding: 0 20px; */
+    display: block;
   }
 </style>

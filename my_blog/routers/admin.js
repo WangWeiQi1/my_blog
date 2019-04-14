@@ -339,7 +339,7 @@ router.get('/selectCate',(req,res,next) => {
 		Blog.count().then((count) => {
 			pages = Math.ceil(count / limit);
 			var skip = (page - 1) * limit;
-			Blog.find().sort({addTime: -1}).limit(limit).skip(skip).populate(['category','user']).then((blogs) => {
+			Blog.find().sort({isTop: -1}).limit(limit).skip(skip).populate(['category', 'user']).then((blogs) => {
 				if(!blogs){
 					responseData.code = -1;
 					responseData.message = '还没有人发表过文章';
@@ -392,16 +392,30 @@ router.get('/selectCate',(req,res,next) => {
 //文章置顶
 router.post('/zhiDing',(req,res,next) => {
 	var id = req.body.id;
-	var addTime = req.body.addTime;
-	var isTop = req.body.isTop;
+	// var addTime = req.body.addTime;
+	// var isTop = req.body.isTop;
 	Blog.update({
 		_id: id
 	},{
-		addTime: addTime,
-		isTop: isTop
+		// addTime: addTime,
+		isTop: true
 	}).then((newBlog) => {
 		responseData.code = 0;
 		responseData.message = '置顶成功';
+		res.json(responseData);
+	})
+})
+
+//取消文章置顶
+router.post('/cancelZhiDing', (req,res,net) => {
+	var id = req.body.id;
+	Blog.update({
+		_id: id
+	}, {
+		isTop: false
+	}).then((newBlog) => {
+		responseData.code = 0;
+		responseData.message = '取消置顶成功';
 		res.json(responseData);
 	})
 })

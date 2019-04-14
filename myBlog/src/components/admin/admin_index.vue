@@ -26,8 +26,8 @@
               label="操作"
               width="200">
               <template slot-scope="scope">
-                <el-button @click="handleClick(scope.row)" type="text" size="small">回复</el-button>
-                <el-button type="text" size="small">删除</el-button>
+                <el-button @click="reply1(scope.row)" type="text" slot="reference" size="small">回复</el-button>
+                <el-button @click="del1(scope.row)" type="text" size="small">删除</el-button>
               </template>
             </el-table-column>
           </el-table>
@@ -135,6 +135,8 @@
       currentIndex(newIndex){
         if(newIndex === 1){
           this.getAllMessages(1);
+        } else {
+          this.getnewsMessages(1);
         }
       }
     },
@@ -189,7 +191,7 @@
               message: res.data.message,
               duration: 1000
             })
-            this.getAllMessages(1);
+            this.currentIndex === 0 ? this.getnewsMessages(1) : this.getAllMessages(1);
           }
         })
       },

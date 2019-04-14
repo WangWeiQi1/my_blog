@@ -135,7 +135,7 @@
       width: 100%
       height: 100%
       background-image: url('../../common/image/bg0.jpg') !important
-      background-size: 1368px 663px;
+      background-size: 100% 100%;
       background-repeat: no-repeat;
       .bg
         height: 100%

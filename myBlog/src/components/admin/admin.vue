@@ -5,7 +5,7 @@
         <router-link tag="div" class="top-text" to="/admin_index">
           <h1 class="title">MyBlog - 管理系统</h1>
         </router-link>
-        <el-menu :default-openeds="['2','3']" router background-color="#545c64" text-color="#fff">
+        <el-menu :default-openeds="['1','2','3']" router background-color="#545c64" text-color="#fff">
           <el-submenu index="1">
             <template slot="title"><i class="iconfont icon-gerentouxiang"></i>用户管理</template>
             <el-menu-item index="userList">用户列表</el-menu-item>

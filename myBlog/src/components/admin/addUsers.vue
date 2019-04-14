@@ -144,7 +144,7 @@
   .el-switch
     position: absolute;
     left: 25%;
-    top: 53%;
+    top: 61%;
   .nothing
     margin-bottom: 100px
 </style>

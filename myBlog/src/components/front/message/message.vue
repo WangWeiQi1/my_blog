@@ -6,12 +6,14 @@
         <p class="liuyanban-description">沟通交流,拉近你我!</p>
         <div class="liuyanban-editor">
           <div class="editor-header">
-            <i class="iconfont icon-emoji"></i>
+            <i class="iconfont icon-emoji" @click="showEmoji"></i>
+            <Emojis :showEmojis="showEmojis" @selectEmoji="selectEmoji"></Emojis>
           </div>
           <div class="editor-content">
             <el-input
               type="textarea"
               placeholder="想和我说点啥呢?"
+              @focus="hideEmoji"
               :rows="2"
               v-model="textarea">
             </el-input>
@@ -33,7 +35,7 @@
                     {{item.user.username}}
                   </div>
                   <div class="info-user-content">
-                    <p>{{item.content}}</p>
+                    <p class="info-user-p" v-html="item.content"></p>
                   </div>
                 </div>
               </div>
@@ -41,7 +43,7 @@
               <span class="replay-item-info" @click="toggleReply(item,index)">{{showTip(item)}}</span>
               <div class="reply-info-container">
                 <ul>
-                  <li class="reply-info-items" v-for="reply in item.replies">
+                  <li class="reply-info-items" v-for="reply in item.replies" :key="reply._id">
                     <div class="reply-info-flex">
                       <div class="reply-info-avatar">
                         <img width="50" height="50" style="border-radius: 50%;" v-lazy="`${avatarUrl}${reply.replyAvatar}`" alt="">
@@ -50,7 +52,7 @@
                         <span class="reply-fromusername">{{reply.fromName}}</span>
                         <span class="onlyspan">回复</span>
                         <span class="reply-tousername">{{reply.toName}}</span>
-                        <span class="reply-info-content">{{reply.replyContent}}</span>
+                        <span class="reply-info-content" v-html="reply.replyContent"></span>
                       </div>
                     </div>
                     <div class="reply-info-replytime">
@@ -62,10 +64,15 @@
                         <el-input
                           type="textarea"
                           :rows="2"
+                          @focus="hideEmoji"
                           :placeholder="showPlaceHolder1(reply)"
                           v-model="textarea2">
                         </el-input>
                         <div class="replay-btn-info-reply" @click.stop.prevent="reSendReply(reply)">提交</div>
+                      </div>
+                      <i class="iconfont icon-emoji emoji-reply1" @click="showEmoji"></i>
+                      <div class="emojis-container-message">
+                        <Emojis :showEmojis="showEmojis" @selectEmoji="selectEmoji2"></Emojis>
                       </div>
                     </div>
                   </li>
@@ -77,9 +84,14 @@
                     type="textarea"
                     :rows="3"
                     :placeholder="showPlaceHolder(item)"
+                    @focus="hideEmoji"
                     v-model="textarea1">
                   </el-input>
                   <div class="replay-btn-info" @click.stop.prevent="sendReply(item)">提交</div>
+                </div>
+                <i class="iconfont icon-emoji emoji-reply1" @click="showEmoji"></i>
+                <div class="emojis-container-message">
+                  <Emojis :showEmojis="showEmojis" @selectEmoji="selectEmoji1"></Emojis>
                 </div>
               </div>
             </li>
@@ -99,6 +111,7 @@
   import Loading from 'base/loading/loading'
   axios.defaults.withCredentials = true;
   import {normalizeTime} from 'common/js/essays'
+  import Emojis from 'base/emojis/emojis'
   export default {
     data(){
       return{
@@ -111,7 +124,8 @@
         currentIndex: -1,
         currentPage: 1,
         hasMore: false,
-        limit: 0
+        limit: 0,
+        showEmojis: false
       }
     },
     created(){
@@ -127,7 +141,7 @@
       sendMessage(){
         var url = 'http://localhost:3000/sendMessage';
         var data = {
-          content: this.textarea,
+          content: this.formatMessage(this.textarea),
           addTime: Date.now()
         }
         var session = JSON.parse(sessionStorage.getItem('userInfo'));
@@ -212,18 +226,18 @@
           return;
         }
         var session = JSON.parse(sessionStorage.getItem('userInfo'));
-        if(item.user.username === session.username){
-          this.$message.warning({
-            message: '不要自言自语哦!嘿嘿',
-            duration: 1000
-          });
-          this.textarea1 = '';
-          return;
-        }else if(!session || session.login === 0){
+        if(!session || session.login === 0) {
           this.$message.warning({
             message: '登录后才可以回复哦~',
             duration: 2000
           })
+          this.textarea1 = '';
+          return;
+        } else if(item.user.username === session.username) {
+          this.$message.warning({
+            message: '不要自言自语哦!嘿嘿',
+            duration: 1000
+          });
           this.textarea1 = '';
           return;
         }
@@ -232,7 +246,7 @@
           messageId: item._id,
           toUserName: item.user.username,
           replyTime: Date.now(),
-          replyContent: this.textarea1
+          replyContent: this.formatMessage(this.textarea1)
         };
         axios.post(url,qs.stringify(data)).then(res => {
           if(res.data.code === 0){
@@ -257,14 +271,6 @@
           return;
         }
         var session = JSON.parse(sessionStorage.getItem('userInfo'));
-        if(reply.fromName === session.username){
-          this.$message.warning({
-            message: '不要自言自语哦!嘿嘿',
-            duration: 1000
-          });
-          this.textarea2 = '';
-          return;
-        }
         if(!session || session.login === 0){
           this.$message.warning({
             message: '登录后才可以回复哦~',
@@ -273,12 +279,20 @@
           this.textarea2 = '';
           return;
         }
+        if(reply.fromName === session.username){
+          this.$message.warning({
+            message: '不要自言自语哦!嘿嘿',
+            duration: 1000
+          });
+          this.textarea2 = '';
+          return;
+        }
         var url = 'http://localhost:3000/replayMessage';
         var data = {
           messageId: reply.msgId,
           toUserName: reply.fromName,
           replyTime: Date.now(),
-          replyContent: this.textarea2
+          replyContent: this.formatMessage(this.textarea2)
         };
         axios.post(url,qs.stringify(data)).then(res => {
           if(res.data.code === 0){
@@ -304,10 +318,35 @@
         if(scrollTop + windowHeight == scrollHeight){
           this.searchMore();
         }
+      },
+      showEmoji() {
+        this.showEmojis = !this.showEmojis;
+      },
+      hideEmoji() {
+        this.showEmojis = false;
+      },
+      selectEmoji(item) {
+        let emoji = `[${item}]`;
+        this.textarea += emoji;
+      },
+      selectEmoji1(item) {
+        let emoji = `[${item}]`;
+        this.textarea1 += emoji;
+      },
+      selectEmoji2(item) {
+        let emoji = `[${item}]`;
+        this.textarea2 += emoji;
+      },
+      formatMessage(msg) {
+        return msg.replace(/\[(.+?)\]/g, (item) => {
+          let word = item.replace(/\[|\]/g,'');
+          return `<img src="http://localhost:3000/emojis/${word}.gif" alt="" />`
+        });
       }
     },
     components:{
-      Loading
+      Loading,
+      Emojis
     }
   }
 </script>
@@ -320,7 +359,7 @@
     min-height: 601px;
     background-image: url('../../../common/image/bg2.jpg');
     background-repeat: no-repeat;
-    background-size: 100% 601px;
+    background-size: 100% 100%;
     overflow:scroll;
     margin-top: 61px;
   }
@@ -378,6 +417,12 @@
     line-height: 45px;
     margin-left: 10px;
   }
+  .emoji-reply1 {
+    position: absolute;
+    top: 76px;
+    left: 50px;
+  }
+  
   .el-button{
     position: relative;
     top: 50px;
@@ -427,7 +472,7 @@
     font-size: 14px;
     padding: 5px 0;
   }
-  .info-user-content>p{
+  .info-user-p{
     white-space: pre-wrap;
     line-height: 23px;
   }
@@ -543,14 +588,17 @@
   }
   .scaleFade-enter{
     opacity: 0;
-    transform: scale(0.3);
   }
   .scaleFade-leave-to{
     opacity: 0;
-    transform: scale(0.3);
   }
   .loading-container{
     position: relative;
     top: 97px;
+  }
+  .emojis-container-message {
+    position: relative;
+    left: 95px;
+    bottom: 20px;
   }
 </style>

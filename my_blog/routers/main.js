@@ -164,7 +164,7 @@ router.get('/getTopArticles',(req,res,next) => {
 	var where = {};
 	var limit = 6;
 	where.isTop = true;
-	Blog.where(where).sort({addTime: -1}).limit(limit).then((blogs) => {
+	Blog.where(where).sort({views: -1}).limit(limit).then((blogs) => {
 		var result = {
 			code: 0,
 			message: '获取置顶列表成功',
@@ -317,6 +317,22 @@ router.get('/delLinks',(req,res,next) => {
 	}).then((result) => {
 		responseData.code = 0;
 		responseData.message = '删除成功';
+		res.json(responseData);
+	})
+})
+
+//模糊查询
+router.get('/searchLikeIt', (req,res,next) => {
+	var search = req.query.search;
+	const reg = new RegExp(search, 'i');
+	Blog.find({
+		$or: [
+			{title: {$regex: reg}}
+		]
+	}).sort({addTime: -1}).then((blogs) => {
+		responseData.code = 0;
+		responseData.message = '查询成功';
+		responseData.data = blogs;
 		res.json(responseData);
 	})
 })

@@ -48,7 +48,7 @@
         sessionStorage.setItem('userInfo',JSON.stringify(session));
         this.$message.success(res.message);
         setTimeout(() => {
-          this.$router.push('/index');
+          this.$router.push('/blog');
         },1000)
       },
       toUpload(){
@@ -72,7 +72,7 @@
         if(this.login !== 1){
           this.$message.warning('登录后方可设置头像');
           setTimeout(() => {
-            this.$router.push('/index');
+            this.$router.push('/blog');
           },1000)
         }
       },

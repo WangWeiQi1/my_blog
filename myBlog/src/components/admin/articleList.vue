@@ -45,7 +45,7 @@
           label="操作"
           width="150">
           <template slot-scope="scope">
-            <el-button @click="topClick(scope.row)" type="text" size="small">置顶</el-button>
+            <el-button @click="topClick(scope.row)" type="text" size="small">{{zhidingDesc(scope.row)}}</el-button>
             <el-button @click="editClick(scope.row)" type="text" size="small">编辑</el-button>
             <el-button @click="delClick(scope.row)" type="text" size="small">删除</el-button>
           </template>
@@ -101,6 +101,13 @@
       this.getAllCategories();
       this.selectIt('',this.currentPage);
     },
+    watch: {
+      value(newValue) {
+        if(newValue) {
+          this.currentPage = 1;
+        }
+      }
+    },
     methods:{
       normalizeTime(blogs){
         blogs.forEach((blog) => {
@@ -144,11 +151,14 @@
         this.currentId = item._id;
       },
       topClick(item){
-        var url = 'http://localhost:3000/admin/zhiDing';
+        var url = '';
+        if(item.isTop) {
+          url = 'http://localhost:3000/admin/cancelZhiDing';
+        } else {
+          url = 'http://localhost:3000/admin/zhiDing';
+        }
         var data = {
-          addTime: Date.now(),
-          id: item._id,
-          isTop: true
+          id: item._id
         };
         axios.post(url,qs.stringify(data)).then(res => {
           if(res.data.code === 0){
@@ -156,6 +166,7 @@
               message: res.data.message,
               duration: 1000
             })
+            this.selectIt(this.value, this.currentPage);
           }
         })
       },
@@ -224,6 +235,9 @@
             return;
           }
         })
+      },
+      zhidingDesc(item) {
+        return item.isTop ? '取消置顶' : '置顶';
       }
     },
     components:{

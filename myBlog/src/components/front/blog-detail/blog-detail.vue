@@ -39,13 +39,15 @@
           <h1 class="comment-h1">发表评论</h1>
           <div class="comment-editor">
             <div class="comment-header">
-              <i class="iconfont icon-emoji"></i>
+              <i class="iconfont icon-emoji" @click="toggleEmojis"></i>
+              <Emojis :showEmojis="showEmojis" @selectEmoji="selectEmoji"></Emojis>
             </div>
             <div class="comment-content">
               <!--<textarea style="border: 0;outline: none;" cols="30" rows="10"></textarea>-->
               <el-input
                 type="textarea"
                 :rows="2"
+                @focus="hideEmojis"
                 placeholder="既然来了，那就说点什么呗!"
                 v-model="textarea">
               </el-input>
@@ -60,7 +62,7 @@
                 <img width="50" height="50" style="border-radius: 50%;" :src="`${avatarUrl}${comment.UserAvatar}`" alt="">
                 <div class="user-comment-info-comment">
                   <p class="item-comment-username">{{comment.UserName}}</p>
-                  <p class="item-comment-content-info">{{comment.commentCon}}</p>
+                  <p class="item-comment-content-info" v-html="comment.commentCon"></p>
                 </div>
               </div>
               <div class="comment-add-time">
@@ -125,6 +127,7 @@
   import {normalizeTime,Guid} from 'common/js/essays'
   import {formatTime} from 'common/js/utils'
   import Markdown from 'base/markdown/markdown'
+  import Emojis from 'base/emojis/emojis'
   export default {
     data(){
       return{
@@ -141,7 +144,8 @@
         textarea: '',
         textarea1: '',
         textarea2: '',
-        comments: []
+        comments: [],
+        showEmojis: false
       }
     },
     created(){
@@ -205,9 +209,13 @@
           return;
         }
         var url = 'http://localhost:3000/sendComments';
+        let res = this.textarea.replace(/\[(.+?)\]/g, (item) => {
+          let word = item.replace(/\[|\]/g, "");
+          return `<img src="http://localhost:3000/emojis/${word}.gif" alt="emojis" />`;
+        })
         var data = {
           id: Guid(),
-          content: this.textarea,
+          content: res,
           addTime: Date.now(),
           blogId: this.$route.params.id
         }
@@ -360,10 +368,21 @@
       },
       showToReplyUser(item){
         return `回复『${item.fromName}』`;
+      },
+      toggleEmojis() {
+        this.showEmojis = !this.showEmojis;
+      },
+      selectEmoji(item) {
+        let emoji = `[${item}]`;
+        this.textarea += emoji;
+      },
+      hideEmojis() {
+        this.showEmojis = false;
       }
     },
     components:{
-      Markdown
+      Markdown,
+      Emojis
     }
   }
 </script>
@@ -378,7 +397,7 @@
     background-image: url('../../../common/image/bg2.jpg');
     background-repeat: no-repeat;
     overflow: scroll;
-    background-size: 100% 601px;
+    background-size: 100% 100%;
   }
   .detail-container{
     width: 90%;

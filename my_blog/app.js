@@ -14,6 +14,8 @@ app.use("/cover",express.static("./cover"));
 
 app.use("/link",express.static("./link"));
 
+app.use("/emojis",express.static("./emojis"));
+
 
 app.use(session({
   secret: 'keyboard cat',

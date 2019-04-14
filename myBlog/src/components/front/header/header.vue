@@ -129,7 +129,7 @@
     transition: all 0.2s;
   }
 
-  .nav-item a.router-link-exact-active{
+  .nav-item a.router-link-active{
     color: #6bc30d;
     border-bottom: 2px solid #6bc30d;
   }

@@ -27,14 +27,14 @@
                 <a class="blog-category">{{blog.category.name}}</a>
               </div>
               <div class="fr">
-          <span class="views">
-            <i class="el-icon-view"></i>
-            <span class="num">{{blog.views}}</span>
-          </span>
+                <span class="views">
+                  <i class="el-icon-view"></i>
+                  <span class="num">{{blog.views}}</span>
+                </span>
                 <span class="comments">
-            <i class="iconfont icon-chat"></i>
-            <span class="cnum">{{blog.comments.length}}</span>
-          </span>
+                  <i class="iconfont icon-chat"></i>
+                  <span class="cnum">{{blog.comments.length}}</span>
+                </span>
               </div>
             </div>
           </li>
@@ -52,28 +52,44 @@
       <div class="rightFiled">
         <div class="search-box">
           <div class="search">
-            <input style="border:none;outline:none;font-size:16px;color:#787977;" type="text" placeholder="输入关键字搜索">
+            <input v-model="query" style="border:none;outline:none;font-size:16px;color:#787977;" type="text" placeholder="输入文章标题关键字">
             <i class="searchIcon el-icon-search"></i>
           </div>
         </div>
-        <ul class="categoryList">
-          <li @click="showAll" :class="showItem">全部文章</li>
-          <li @click="showCategory(item,index)" v-for="(item,index) in categories" :class="{'current': currentIndex === index}">{{item.name}}</li>
+        <ul class="searchResList" v-show="searchRes.length">
+          <p class="searchResDesc">搜索结果</p>
+          <transition-group name="fadeSearch">
+            <li @click="toItemLink(blog)" class="searchResItem" v-for="blog in searchRes" :key="blog._id">{{blog.title}}</li>
+          </transition-group>
         </ul>
-        <div class="hot-rank-list" v-show="hotArr.length">
-          <div class="hot-blog-title-filed">
-            <h1 class="hot-blog-title">热门文章</h1>
-            <RankList :data="hotArr" @select="selectItem"></RankList>
+        <div v-show="!query">
+          <ul class="categoryList">
+            <li @click="showAll" :class="showItem">全部文章</li>
+            <li @click="showCategory(item,index)" v-for="(item,index) in categories" :key="item._id" :class="{'current': currentIndex === index}">{{item.name}}</li>
+          </ul>
+          <div class="hot-rank-list" v-show="hotArr.length">
+            <div class="hot-blog-title-filed">
+              <h1 class="hot-blog-title">热门文章</h1>
+              <RankList :data="hotArr" @select="selectItem"></RankList>
+            </div>
           </div>
-        </div>
-        <div class="top-rank-list" v-show="topArr.length">
-          <div class="top-blog-title-filed">
-            <h1 class="top-blog-title">置顶推荐</h1>
-            <RankList :data="topArr" @select="selectItem"></RankList>
+          <div class="top-rank-list" v-show="topArr.length">
+            <div class="top-blog-title-filed">
+              <h1 class="top-blog-title">置顶推荐</h1>
+              <RankList :data="topArr" @select="selectItem"></RankList>
+            </div>
           </div>
         </div>
       </div>
     </div>
+    <transition name="slowFade">
+      <div class="nothing-container" v-show="showNothing">
+        <div class="nothing-box">
+          <img class="nothing-img" src="../../../common/image/erha.jpg" alt="">
+          <p class="nothing-desc">该分类下暂时还没发表过文章~</p>
+        </div>
+      </div>
+    </transition>
     <GoTop :showFlag="showFlag" @goToTop="goToTop"></GoTop>
     <router-view></router-view>
   </div>
@@ -102,7 +118,10 @@
         hotArr: [],
         topArr: [],
         showFlag: false,
-        scrollTop: 0
+        scrollTop: 0,
+        showNothing: false,
+        query: '',
+        searchRes: []
       }
     },
     created(){
@@ -128,6 +147,14 @@
       },
       currentIndex(newIndex){
         this.$refs.blogBody.scrollTop = 0;
+      },
+      query(newQuery) {
+        if(newQuery) {
+          this.searchItemByQuery(newQuery);
+        }
+        if(newQuery === '') {
+          this.searchRes = [];
+        }
       }
     },
     methods:{
@@ -141,6 +168,11 @@
         }
         axios.get(url).then(res => {
           if(res.data.code === 0){
+            if(!res.data.blogs.length) {
+              this.showNothing = true;
+            } else {
+              this.showNothing = false;
+            }
             this.count = res.data.count;
             this.limit = res.data.limit;
             this.loading = false;
@@ -149,6 +181,22 @@
         })
       },
       normalizeTime(blogs){
+        let isTopArr = [];
+        let isNormalArr = [];
+        blogs.forEach((item) => {
+          if(item.isTop) {
+            isTopArr.push(item);
+          } else {
+            isNormalArr.push(item);
+          }
+        })
+        isTopArr.sort((a, b) => {
+          return b.addTime - a.addTime;
+        })
+        isNormalArr.sort((a, b) => {
+          return b.addTime - a.addTime;
+        })
+        blogs = isTopArr.concat(isNormalArr);
         blogs.forEach((item) => {
           var res = formatTime(Number(item.addTime));
           item.addTime = res;
@@ -223,14 +271,33 @@
       },
       handleScroll(e){
         this.scrollTop = this.$refs.blogBody.scrollTop;
-        if(this.scrollTop > 1500){
+        if(this.scrollTop <= 0) {
+          clearInterval(this.timer);
+        }
+        const client_height = document.body.clientHeight || document.documentElement.clientHeight;
+        if(this.scrollTop > client_height){
           this.showFlag = true;
         }else {
           this.showFlag = false;
         }
       },
       goToTop(){
-        this.$refs.blogBody.scrollTop = 0;
+        if(this.$refs.blogBody.scrollTop > 0) {
+          this.timer = setInterval(() => {
+            this.$refs.blogBody.scrollTop -= 100;
+          }, 20)
+        }
+      },
+      searchItemByQuery(newQuery) {
+        var url = 'http://localhost:3000/searchLikeIt?search=' + newQuery;
+        axios.get(url).then(res => {
+          if(res.data.code === 0) {
+            this.searchRes = res.data.data;
+          }
+        })
+      },
+      toItemLink(blog) {
+        this.$router.push(`/blog/${blog._id}`);
       }
     },
     components:{
@@ -249,7 +316,7 @@
     width: 100%;
     background-image: url('../../../common/image/bg2.jpg');
     background-repeat: no-repeat;
-    background-size: 100% 601px;
+    background-size: 100% 100%;
     overflow: scroll;
   }
   .container{
@@ -384,6 +451,41 @@
     height: 80px;
     background: #787977;
   }
+  .searchResList {
+    width: 100%;
+    height: 100%;
+    background: rgb(255,255,255);
+    border-radius: 10px;
+    cursor: pointer;
+    margin: 10px 0;
+    padding-bottom: 15px;
+  }
+  .searchResItem {
+    color: #787977;
+    text-align: center;
+    padding: 10px 0;
+  }
+  .searchResDesc {
+    color: #787977;
+    padding: 18px 0 0 18px;
+  }
+  .searchResItem:nth-child(1) {
+    padding-top: 20px;
+  }
+  .searchResItem:nth-last-child(1) {
+    padding-bottom: 20px;
+  }
+  .searchResItem:hover {
+    text-decoration: underline;
+    color: #6bc30d;
+  }
+  .fadeSearch-enter-active {
+    transition: all 0.4s;
+  }
+  .fadeSearch-enter {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
   .search{
     width: 260px;
     height: 40px;
@@ -442,15 +544,16 @@
     transition: all 1s;
   }
   .fade-leave-active {
-    transition: all 0.3s;
+    transition: all 1s;
   }
   .fade-enter{
     opacity: 0;
-    transform: scale(0.1);
+    display: block;
+    transform: translateY(20px);
   }
   .fade-leave-to{
     opacity: 0;
-    transform: scale(0.3);
+    display: none;
   }
   .hot-rank-list{
     width: 303px;
@@ -515,4 +618,33 @@
     left: -18px;
     top: 9px;
   }
+  .nothing-container {
+    width: 90%;
+    margin: 0 auto;
+  }
+  .nothing-box {
+    width: 890px;
+    height: 375px;
+    background: #fff;
+    position: relative;
+    top: -100px;
+    text-align: center;
+  }
+  .nothing-img {
+    width: 400px;
+    height: 250px;
+    margin-top: 40px;
+  }
+  .nothing-desc {
+    opacity: .5;
+    margin-top: 30px;
+  }
+  .slowFade-enter-active{
+    transition: all 1s;
+  }
+  .slowFade-enter{
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
 </style>

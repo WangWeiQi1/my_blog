@@ -104,7 +104,7 @@
     background-image: url('../../../common/image/bg2.jpg');
     background-repeat: no-repeat;
     overflow: scroll;
-    background-size: 100% 601px;
+    background-size: 100% 100%;
     color: #515250;
     /*overflow: hidden;*/
   }
@@ -166,23 +166,23 @@
     padding: 20px 0 20px 25px;
   }
   .link-list-content{
-    width: 1280px;
     height: 100%;
     min-height: 500px;
     margin: 20px auto 0 auto;
-    padding-left: 24px;
   }
   .link-list{
-    width: 1280px;
     height: 100%;
+    margin: 0 auto;
+    width: 95%;
   }
   .link-list>li{
-    width: 299px;
+    width: 23.61%;
     height: 180px;
     background: #ffffff;
     margin-bottom: 20px;
-    margin-right: 20px;
     float: left;
+    border-radius: 10px;
+    margin-left: 15px;
   }
   .link-list>li>a{
     width: 100%;
